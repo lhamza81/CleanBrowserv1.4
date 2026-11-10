@@ -28,7 +28,20 @@ jobs:
 
       - name: Build debug APK
         working-directory: CleanBrowser
-        run: gradle assembleDebug --stacktrace
+        shell: bash
+        run: gradle assembleDebug --stacktrace 2>&1 | tee build.log
+
+      - name: Show the errors
+        if: failure()
+        run: |
+          errs=$(grep -E '^e: |What went wrong|Execution failed' -A2 CleanBrowser/build.log | head -60)
+          if [ -z "$errs" ]; then errs=$(tail -n 40 CleanBrowser/build.log); fi
+          {
+            echo '### Build errors'
+            echo '```'
+            echo "$errs"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:
